@@ -1,0 +1,12 @@
+﻿# Dependencies
+node_modules/
+
+# Codecept output
+output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env/credentials (keep local if sensitive)
+.env
