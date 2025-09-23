@@ -14,8 +14,35 @@ credentials.forEach(({ username, password}) => {
     'Content-Type': 'application/json'
   });
   const res = await I.sendPostRequest(POST_PATH, {});
-  require('assert').strict.equal(res.status, 200);
+  const assert = require('assert').strict;
+  if (username === 'testomat') {
+    // Unauthorized model returns 200 with failure payload
+    assert.equal(res.status, 200, `Expected 200 for ${username}, got ${res.status}`);
+    assert.equal(res.data.success, false);
+    assert.equal(res.data.error && res.data.error.code, 'UNAUTHORIZED');
+    assert.equal(typeof res.data.error.details, 'string');
+    assert.equal(typeof res.data.trace_id, 'string');
+  } else {
+    assert.equal(res.status, 200, `Expected 200 for ${username}, got ${res.status}`);
+  }
 
 });
 });
-     
+Feature('auth tests_UNAUTHORIZED');
+credentials.forEach(({ username }) => {
+ Scenario(`Unauthorized without credentials: ${username}`, async ({ I }) => {
+  // Do NOT set Authorization header to simulate unauthorized access
+  I.haveRequestHeaders({
+    'Content-Type': 'application/json'
+  });
+  const res = await I.sendPostRequest(POST_PATH, {});
+  const assert = require('assert').strict;
+  // Else model: status 200 with failure payload
+  assert.equal(res.status, 200);
+  assert.equal(res.data.success, false);
+  assert.equal(res.data.error && res.data.error.code, 'UNAUTHORIZED');
+  assert.equal(typeof res.data.error.details, 'string');
+  assert.equal(typeof res.data.trace_id, 'string');
+
+});
+});
