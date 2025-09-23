@@ -13,7 +13,8 @@ export const config: CodeceptJS.MainConfig = {
     Playwright: {
       browser: 'chromium',
       url: 'https://crypto.cheipho.com/universal/mimic/cardrouting/api/v1',
-      show: true
+      show: true,
+      waitForTimeout: 30000
     },
      REST: {
       endpoint: process.env.TARGET_URL || 'https://crypto.cheipho.com/universal/mimic/cardrouting/api/v1',

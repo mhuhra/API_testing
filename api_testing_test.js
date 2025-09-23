@@ -47,8 +47,8 @@ credentials.forEach(({ username }) => {
 });
 });
 
-Feature('sale create - specific user');
-Scenario('Create sale with testomat-ids credentials', async ({ I }) => {
+Feature('sale create - success');
+Scenario('Create sale with testomat-ids result-success', async ({ I }) => {
   const username = 'testomat-ids';
   const password = 'y7p5oj6udfg527sw';
   const token = Buffer.from(`${username}:${password}`).toString('base64');
@@ -94,4 +94,270 @@ Scenario('Create sale with testomat-ids credentials', async ({ I }) => {
   assert.equal(res.data.result && res.data.result.status, 'USER_INPUT_REQUIRED');
   assert.equal(typeof res.data.result.url_processing, 'string');
   assert.ok(/^https?:\/\//i.test(res.data.result.url_processing));
+  const processingUrl = res.data.result.url_processing;
+I.say(`Opening processing URL: ${processingUrl}`);
+await I.amOnPage(processingUrl);
+  // Robust polling for up to 120s: look in main and any iframe
+  const headerText = 'Test Payment Processor 3D Secure Challenge';
+  const successInput = 'input[value="Successfully complete 3DS challenge"]';
+  const successButton = 'button:has-text("Successfully complete 3DS challenge")';
+  const declineAny = 'input[value="Decline completing 3DS challenge"], button:has-text("Decline completing 3DS challenge")';
+  const failAny = 'input[value="Fail 3DS challenge (Invalid OTP)"], button:has-text("Fail 3DS challenge (Invalid OTP)")';
+
+  let clicked = false;
+  for (let i = 0; i < 120 && !clicked; i++) {
+    try {
+      // try in main context
+      const hasInput = await I.grabNumberOfVisibleElements(successInput);
+      const hasBtn = await I.grabNumberOfVisibleElements(successButton);
+      if (hasInput || hasBtn) {
+        await I.waitForText(headerText, 5);
+        I.seeElement(declineAny);
+        I.seeElement(failAny);
+        await I.click(hasInput ? successInput : successButton);
+        clicked = true;
+        break;
+      }
+
+      // try inside iframes
+      const iframeCount = await I.grabNumberOfVisibleElements('iframe');
+      for (let idx = 1; idx <= iframeCount && !clicked; idx++) {
+        try {
+          I.switchTo(locate('iframe').at(idx));
+          const inInput = await I.grabNumberOfVisibleElements(successInput);
+          const inBtn = await I.grabNumberOfVisibleElements(successButton);
+          if (inInput || inBtn) {
+            await I.waitForText(headerText, 5);
+            I.seeElement(declineAny);
+            I.seeElement(failAny);
+            await I.click(inInput ? successInput : successButton);
+            clicked = true;
+            break;
+          }
+        } finally {
+          I.switchTo();
+        }
+      }
+    } catch (e) {
+      // ignore and retry
+    }
+    if (!clicked) await I.wait(1);
+  }
+
+  if (!clicked) throw new Error('3DS success option not found within 120s');
+
+  await I.wait(2);
+  await I.saveScreenshot('after_3ds.png', true);
+
+});
+
+
+Feature('sale create - declined');
+Scenario('Create sale with testomat-ids result-decline', async ({ I }) => {
+  const username = 'testomat-ids';
+  const password = 'y7p5oj6udfg527sw';
+  const token = Buffer.from(`${username}:${password}`).toString('base64');
+  I.haveRequestHeaders({
+    Authorization: `Basic ${token}`,
+    'Content-Type': 'application/json'
+  });
+
+  const body = {
+    amount: {
+      amount: '11.20',
+      currency: 'EUR'
+    },
+    sale_id: randomUUID(),
+    user: {
+      user_id: 'jghjr5855458',
+      email: 'm.gigolaeva@globo.games',
+      kyc: {
+        result: 'SUCCESS',
+        verification_kind: 'NONE'
+      },
+      statistics: {
+        registered_at: '2024-01-10',
+        total_deposit_count: 6,
+        total_withdrawal_count: 2
+      }
+    },
+    bank_card: {
+      cardholder: 'Q Q SEGMENT=TRUST METHOD=test_sale_testomat',
+      cvv: '120',
+      pan: '4444 4444 4444 4448',
+      expiration_month: 3,
+      expiration_year: 33
+    },
+    payment_profile: 'pp_debug_method_no_limits',
+    merchant_user_entry_point_url: 'https://legendspin.com/'
+  };
+
+  const res = await I.sendPostRequest(PAY_SALE_PATH, body);
+  const assert = require('assert').strict;
+  assert.equal(res.status, 200);
+  assert.equal(res.data.success, true);
+  assert.equal(res.data.result && res.data.result.status, 'USER_INPUT_REQUIRED');
+  assert.equal(typeof res.data.result.url_processing, 'string');
+  assert.ok(/^https?:\/\//i.test(res.data.result.url_processing));
+  const processingUrl = res.data.result.url_processing;
+I.say(`Opening processing URL: ${processingUrl}`);
+await I.amOnPage(processingUrl);
+  // Robust polling for up to 120s: look in main and any iframe
+  const headerText = 'Test Payment Processor 3D Secure Challenge';
+  const declineInput = 'input[value="Decline completing 3DS challenge"]';
+  const declineButton = 'button:has-text("Decline completing 3DS challenge")';
+  const successAny = 'input[value="Successfully complete 3DS challenge"], button:has-text("Successfully complete 3DS challenge")';
+  const failAny = 'input[value="Fail 3DS challenge (Invalid OTP)"], button:has-text("Fail 3DS challenge (Invalid OTP)")';
+
+  let clicked = false;
+  for (let i = 0; i < 120 && !clicked; i++) {
+    try {
+      // try in main context
+      const hasInput = await I.grabNumberOfVisibleElements(declineInput);
+      const hasBtn = await I.grabNumberOfVisibleElements(declineButton);
+      if (hasInput || hasBtn) {
+        await I.waitForText(headerText, 5);
+        I.seeElement(successAny);
+        I.seeElement(failAny);
+        await I.click(hasInput ? declineInput : declineButton);
+        clicked = true;
+        break;
+      }
+
+      // try inside iframes
+      const iframeCount = await I.grabNumberOfVisibleElements('iframe');
+      for (let idx = 1; idx <= iframeCount && !clicked; idx++) {
+        try {
+          I.switchTo(locate('iframe').at(idx));
+          const inInput = await I.grabNumberOfVisibleElements(declineInput);
+          const inBtn = await I.grabNumberOfVisibleElements(declineButton);
+          if (inInput || inBtn) {
+            await I.waitForText(headerText, 5);
+            I.seeElement(successAny);
+            I.seeElement(failAny);
+            await I.click(inInput ? declineInput : declineButton);
+            clicked = true;
+            break;
+          }
+        } 
+        finally {
+          I.switchTo();
+        }
+      }
+    } catch (e) {
+      // ignore and retry
+    }
+    if (!clicked) await I.wait(1);
+  }
+
+  if (!clicked) throw new Error('3DS success option not found within 120s');
+
+  await I.wait(2);
+  await I.saveScreenshot('after_3ds.png', true);
+
+});
+
+Feature('sale create - failed');
+Scenario('Create sale with testomat-ids result-fail', async ({ I }) => {
+  const username = 'testomat-ids';
+  const password = 'y7p5oj6udfg527sw';
+  const token = Buffer.from(`${username}:${password}`).toString('base64');
+  I.haveRequestHeaders({
+    Authorization: `Basic ${token}`,
+    'Content-Type': 'application/json'
+  });
+
+  const body = {
+    amount: {
+      amount: '11.20',
+      currency: 'EUR'
+    },
+    sale_id: randomUUID(),
+    user: {
+      user_id: 'jghjr5855458',
+      email: 'm.gigolaeva@globo.games',
+      kyc: {
+        result: 'SUCCESS',
+        verification_kind: 'NONE'
+      },
+      statistics: {
+        registered_at: '2024-01-10',
+        total_deposit_count: 6,
+        total_withdrawal_count: 2
+      }
+    },
+    bank_card: {
+      cardholder: 'Q Q SEGMENT=TRUST METHOD=test_sale_testomat',
+      cvv: '120',
+      pan: '4444 4444 4444 4448',
+      expiration_month: 3,
+      expiration_year: 33
+    },
+    payment_profile: 'pp_debug_method_no_limits',
+    merchant_user_entry_point_url: 'https://legendspin.com/'
+  };
+
+  const res = await I.sendPostRequest(PAY_SALE_PATH, body);
+  const assert = require('assert').strict;
+  assert.equal(res.status, 200);
+  assert.equal(res.data.success, true);
+  assert.equal(res.data.result && res.data.result.status, 'USER_INPUT_REQUIRED');
+  assert.equal(typeof res.data.result.url_processing, 'string');
+  assert.ok(/^https?:\/\//i.test(res.data.result.url_processing));
+  const processingUrl = res.data.result.url_processing;
+I.say(`Opening processing URL: ${processingUrl}`);
+await I.amOnPage(processingUrl);
+  // Robust polling for up to 120s: look in main and any iframe
+  const headerText = 'Test Payment Processor 3D Secure Challenge';
+  const failInput = 'input[value="Fail 3DS challenge (Invalid OTP)"]';
+  const failButton = 'button:has-text("Fail 3DS challenge (Invalid OTP)")';
+  const successAny = 'input[value="Successfully complete 3DS challenge"], button:has-text("Successfully complete 3DS challenge")';
+  const declineAny = 'input[value="Decline completing 3DS challenge"], button:has-text("Decline completing 3DS challenge")';
+
+  let clicked = false;
+  for (let i = 0; i < 120 && !clicked; i++) {
+    try {
+      // try in main context
+      const hasInput = await I.grabNumberOfVisibleElements(failInput);
+      const hasBtn = await I.grabNumberOfVisibleElements(failButton);
+      if (hasInput || hasBtn) {
+        await I.waitForText(headerText, 5);
+        I.seeElement(successAny);
+        I.seeElement(declineAny);
+        await I.click(hasInput ? failInput : failButton);
+        clicked = true;
+        break;
+      }
+
+      // try inside iframes
+      const iframeCount = await I.grabNumberOfVisibleElements('iframe');
+      for (let idx = 1; idx <= iframeCount && !clicked; idx++) {
+        try {
+          I.switchTo(locate('iframe').at(idx));
+          const inInput = await I.grabNumberOfVisibleElements(failInput);
+          const inBtn = await I.grabNumberOfVisibleElements(failButton);
+          if (inInput || inBtn) {
+            await I.waitForText(headerText, 5);
+            I.seeElement(successAny);
+            I.seeElement(declineAny);
+            await I.click(inInput ? failInput : failButton);
+            clicked = true;
+            break;
+          }
+        } 
+        finally {
+          I.switchTo();
+        }
+      }
+    } catch (e) {
+      // ignore and retry
+    }
+    if (!clicked) await I.wait(1);
+  }
+
+  if (!clicked) throw new Error('3DS success option not found within 120s');
+
+  await I.wait(2);
+  await I.saveScreenshot('after_3ds.png', true);
+
 });
