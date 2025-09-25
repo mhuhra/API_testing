@@ -1,0 +1,50 @@
+[{
+  "cardholder": "Q Q SEGMENT=TRUST METHOD=test_sale_testomat",
+  "cvv": "120",
+  "pan": "4444 4444 4444 4448",
+  "expiration_month": 3,
+  "expiration_year": 33
+},
+{
+    "cardholder": "Q-Q Q SEGMENT=TRUST METHOD=test_sale_testomat",
+    "cvv": "120",
+    "pan": "4444 4444 4444 4448",
+    "expiration_month": 3,
+    "expiration_year": 33
+  },
+  {
+    "cardholder": "Q. Q SEGMENT=TRUST METHOD=test_sale_testomat",
+    "cvv": "120",
+    "pan": "4444 4444 4444 4448",
+    "expiration_month": 3,
+    "expiration_year": 33
+  },
+  {
+    "cardholder": "Q' Q SEGMENT=TRUST METHOD=test_sale_testomat",
+    "cvv": "120",
+    "pan": "4444 4444 4444 4448",
+    "expiration_month": 3,
+    "expiration_year": 33
+  },
+   {
+    "cardholder": "Q Q Q SEGMENT=TRUST METHOD=test_sale_testomat",
+    "cvv": "120",
+    "pan": "4444 4444 4444 4448",
+    "expiration_month": 3,
+    "expiration_year": 33
+  },
+  {
+    "cardholder": "Q Q. SEGMENT=TRUST METHOD=test_sale_testomat",
+    "cvv": "120",
+    "pan": "4444 4444 4444 4448",
+    "expiration_month": 3,
+    "expiration_year": 33
+  },
+  {
+    "cardholder": "Q Q' SEGMENT=TRUST METHOD=test_sale_testomat",
+    "cvv": "120",
+    "pan": "4444 4444 4444 4448",
+    "expiration_month": 3,
+    "expiration_year": 33
+  }]
+
