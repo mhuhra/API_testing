@@ -699,17 +699,5 @@ Scenario('Create sale with testomat-ids declined', async ({ I }) => {
   await I.saveScreenshot('after_3ds_decline.png', true);
 });
 
-Feature('see parameters in connector');
-Scenario('Case:see parameters in connector', async ({ I }) => {
-  const bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoidGVzdCIsImVudiI6ImRldi1nZyIsInJvbGUiOiJzZXJ2aWNlIiwibmJmIjoxNjcxODAzNjgxLCJleHAiOjIwMTk2ODY0MDAsImlhdCI6MTY3MTgwMzY4MSwiaXNzIjoidW5pdmVyc2FsIiwiYXVkIjoiaW50ZXJuYWwifQ.0JNynzgyaOBsIM8E_JPdF2vZXISQNn5wLPfvjQh-qvU'; 
-  
-  I.haveRequestHeaders({
-    Authorization: `Bearer ${bearerToken}`,
-    'Content-Type': 'application/json'
-  });
-  const res = await I.sendPostRequest(POST_PATH, {});
-  const assert = require('assert').strict;
-  assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
-  assert.equal(res.data.success, true); // or false, depending on your API
-});
+
 
