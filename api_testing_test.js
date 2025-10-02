@@ -1,4 +1,5 @@
 const { randomUUID } = require('crypto');
+const { isNull, isElement } = require('lodash');
 const path = require('path');
 const credentials = require(path.join(__dirname, 'credentials.json'));
 const bankCards = require(path.join(__dirname, 'bank_cards.json'));
@@ -10,6 +11,7 @@ const BASE_URL = process.env.TARGET_URL || 'https://crypto.cheipho.com/universal
 const POST_PATH = process.env.POST_PATH || '/health/check';
 const PAY_SALE_PATH = process.env.PAY_SALE_PATH || '/sale/create';
 const STOP_ON_FIRST_FAILURE = process.env.STOP_ON_FIRST_FAILURE === 'true';
+
 
 Feature('auth tests');
 credentials.forEach(({ username, password}) => {
@@ -53,6 +55,8 @@ credentials.forEach(({ username }) => {
 });
 });
 
+let lastReferenceId = null;
+
 Feature('sale create - success');
 Scenario('Create sale with testomat-ids credentials', async ({ I }) => {
   const username = 'testomat-ids';
@@ -66,7 +70,7 @@ Scenario('Create sale with testomat-ids credentials', async ({ I }) => {
   const body = {
     amount: {
       amount: '11.20',
-      currency: 'EUR'
+      currency: 'USD'
     },
     sale_id: randomUUID(),
     user: {
@@ -92,8 +96,17 @@ Scenario('Create sale with testomat-ids credentials', async ({ I }) => {
   assert.equal(res.status, 200);
   assert.equal(res.data.success, true);
   assert.equal(res.data.result && res.data.result.status, 'USER_INPUT_REQUIRED');
+  assert.equal(typeof res.data.result.reference_id, 'string');
+  console.log('SEE PARAMETERS RESPONSE:', res.data.result.reference_id); // Debug reference id
+  assert.equal(typeof res.data.result.amount_initial.currency, 'string');
+  assert.equal(typeof res.data.result.amount_initial.amount, 'string');
   assert.equal(typeof res.data.result.url_processing, 'string');
   assert.ok(/^https?:\/\//i.test(res.data.result.url_processing));
+  lastReferenceId = res.data.result.reference_id;
+  amount_initial= res.data.result.amount_initial.amount;
+  currency_initial= res.data.result.amount_initial.currency;
+  console.log('SEE PARAMETERS RESPONSE:', amount_initial);
+  console.log('SEE PARAMETERS RESPONSE:', currency_initial);
   const processingUrl = res.data.result.url_processing;
 I.say(`Opening processing URL: ${processingUrl}`);
 await I.amOnPage(processingUrl);
@@ -145,11 +158,35 @@ await I.amOnPage(processingUrl);
   }
 
   if (!clicked) throw new Error('3DS success option not found within 120s');
-  await I.waitForText('Payment succesfull', 15);
+  await I.waitForText('Payment succesful', 15);
   I.seeElement('svg[xmlns="http://www.w3.org/2000/svg"]');
   await I.wait(2);
   await I.saveScreenshot('after_3ds.png', true);
 
+
+Feature('see parameters in connector'); 
+Scenario('Case:see parameters in connector', async ({ I }) => {
+ 
+  const seeParametersUrl = `https://crypto.cheipho.com/universal/payment-connector/manage/debug/payment/${lastReferenceId}`;
+  I.say(`Opening processing URL: ${seeParametersUrl}`);
+await I.amOnPage(seeParametersUrl,15);
+  const Status = 'Charged';
+  const Decline = null;
+  const Block = null;
+  DecimalAmount = parseFloat(amount_initial).toFixed(2);   
+  AlphabeticCode = currency_initial;
+  I.seeElement(`text=${Status}`);
+  console.log('SEE:', Status);
+  I.seeElement(`text=${Decline}`);
+  I.seeElement(`text=${Block}`);
+  if (amount_initial!=null && currency_initial!=null){
+  I.seeElement(`text=${DecimalAmount}`)===amount_initial;
+  I.seeElement(`text=${AlphabeticCode}`)===currency_initial;
+ 
+ 
+}); 
+  await I.wait(2);
+  await I.saveScreenshot('after_3ds.png', true);
 });
 
 
@@ -660,5 +697,19 @@ Scenario('Create sale with testomat-ids declined', async ({ I }) => {
   I.seeElement('svg[xmlns="http://www.w3.org/2000/svg"]');
   await I.wait(2);
   await I.saveScreenshot('after_3ds_decline.png', true);
+});
+
+Feature('see parameters in connector');
+Scenario('Case:see parameters in connector', async ({ I }) => {
+  const bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoidGVzdCIsImVudiI6ImRldi1nZyIsInJvbGUiOiJzZXJ2aWNlIiwibmJmIjoxNjcxODAzNjgxLCJleHAiOjIwMTk2ODY0MDAsImlhdCI6MTY3MTgwMzY4MSwiaXNzIjoidW5pdmVyc2FsIiwiYXVkIjoiaW50ZXJuYWwifQ.0JNynzgyaOBsIM8E_JPdF2vZXISQNn5wLPfvjQh-qvU'; 
+  
+  I.haveRequestHeaders({
+    Authorization: `Bearer ${bearerToken}`,
+    'Content-Type': 'application/json'
+  });
+  const res = await I.sendPostRequest(POST_PATH, {});
+  const assert = require('assert').strict;
+  assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
+  assert.equal(res.data.success, true); // or false, depending on your API
 });
 
