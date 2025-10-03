@@ -166,8 +166,7 @@ await I.amOnPage(processingUrl);
 
 Feature('see parameters in connector'); 
 Scenario('Case:see parameters in connector', async ({ I }) => {
- 
-  const seeParametersUrl = `https://crypto.cheipho.com/universal/payment-connector/manage/debug/payment/${lastReferenceId}`;
+   const seeParametersUrl = `https://crypto.cheipho.com/universal/payment-connector/manage/debug/payment/${lastReferenceId}`;
   I.say(`Opening processing URL: ${seeParametersUrl}`);
 await I.amOnPage(seeParametersUrl,15);
   const Status = 'Charged';
@@ -183,10 +182,9 @@ await I.amOnPage(seeParametersUrl,15);
   I.seeElement(`text=${DecimalAmount}`)===amount_initial;
   I.seeElement(`text=${AlphabeticCode}`)===currency_initial;
  
- 
-}); 
   await I.wait(2);
   await I.saveScreenshot('after_3ds.png', true);
+}});
 });
 
 
